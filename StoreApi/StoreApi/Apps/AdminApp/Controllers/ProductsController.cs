@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using StoreApi.Apps.AdminApp.DTOs.CategoryDtos;
 using StoreApi.Apps.AdminApp.DTOs.ProductDtos;
+using StoreApi.DATA.Entities;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApplication1.DAL;
@@ -14,24 +17,21 @@ namespace StoreApi.Apps.AdminApp.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly StoreDbContext _context;
+        private readonly IMapper _mapper;
 
-        public ProductsController(StoreDbContext context)
+        public ProductsController(StoreDbContext context,IMapper mapper)
         {
             this._context = context;
+            this._mapper = mapper;
         }
         [HttpGet]
         [Route("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            Product product = await _context.Products.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
-            ProductGetDto productDto = new ProductGetDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                CostPrice = product.CostPrice,
-                SalePrice = product.SalePrice,
-            };
+            Product product = await _context.Products.Include(x=>x.Category).ThenInclude(x=>x.Products).FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
             if (product == null) return NotFound();
+            ProductGetDto productDto = _mapper.Map<ProductGetDto>(product);
+
 
             return StatusCode(200, productDto);
         }
@@ -39,12 +39,25 @@ namespace StoreApi.Apps.AdminApp.Controllers
         [Route("")]
         public async Task<IActionResult> GetAll(int page =1)
         {
-            var products = await _context.Products.Where(x=>!x.IsDeleted).Skip((page-1)*8).Take(8).ToListAsync();
+            var products = await _context.Products.Include(x=>x.Category).Where(x=>!x.IsDeleted).Skip((page-1)*8).Take(8).ToListAsync();
             if(products == null) return BadRequest();
             ProductListDto productList = new ProductListDto
             {
                 TotalCount = _context.Products.Count(),
-                Items = _context.Products.Select(x=> new ProductListItemDto { Id = x.Id,Name = x.Name,SalePrice=x.SalePrice}).ToList()
+                Items = products.Select(x =>
+                new ProductListItemDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    SalePrice = x.SalePrice,
+                    Category = new CategoryInProductListItemDto
+                    {
+                        Id = x.Category.Id,
+                        Name = x.Category.Name,
+                        ProductCount = x.Category.Products.Count()
+                    }
+
+                }).ToList()
             };
 
             return StatusCode(200, productList);
@@ -52,12 +65,16 @@ namespace StoreApi.Apps.AdminApp.Controllers
         [HttpPost("")]
         public async Task<IActionResult> Create(ProductPostDto productDto)
         {
+            if (!await _context.Categories.AnyAsync(x => x.Id == productDto.CategoryId && !x.IsDeleted))
+                return NotFound();
+
             if (productDto == null) return BadRequest();
             Product product = new Product
             {
                 Name = productDto.Name,
                 SalePrice = productDto.SalePrice,
                 CostPrice = productDto.CostPrice,
+                CategoryId = productDto.CategoryId
             };
             await _context.Products.AddAsync(product);
             await _context.SaveChangesAsync();
@@ -69,7 +86,10 @@ namespace StoreApi.Apps.AdminApp.Controllers
         {
             Product isExists = await _context.Products.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
             if (isExists == null) return NotFound();
-            if (productDto == null) return NotFound();
+
+            if (isExists.CategoryId != productDto.CategoryId && !await _context.Categories.AnyAsync(x => x.Id == productDto.CategoryId && !x.IsDeleted))
+                return NotFound();
+
             isExists.SalePrice = productDto.SalePrice;
             isExists.CostPrice = productDto.CostPrice;
             isExists.Name = productDto.Name;

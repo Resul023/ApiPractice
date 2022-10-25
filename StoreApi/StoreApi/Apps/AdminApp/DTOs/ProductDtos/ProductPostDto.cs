@@ -7,6 +7,7 @@ namespace StoreApi.Apps.AdminApp.DTOs.ProductDtos
         public string Name  { get; set; }
         public decimal SalePrice { get; set; }
         public decimal CostPrice { get; set; }
+        public int CategoryId { get; set; }
 
     }
     public class ProductPostDtoValidator:AbstractValidator<ProductPostDto>
@@ -25,11 +26,14 @@ namespace StoreApi.Apps.AdminApp.DTOs.ProductDtos
                 .GreaterThanOrEqualTo(0).WithMessage("Cost price must be greater than 0")
                 .NotNull().WithMessage("Cost price is required");
 
+            RuleFor(x => x.CategoryId).NotNull().WithMessage("Category Id is required");
+
             RuleFor(x => x).Custom((x, context) =>
             {
                 if (x.CostPrice > x.SalePrice)
                     context.AddFailure("SalePrice","SalePrice must be greater than CostPrice");
             });
+
         }
     }
 }

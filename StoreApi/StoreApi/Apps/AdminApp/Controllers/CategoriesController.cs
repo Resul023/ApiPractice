@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
@@ -17,29 +19,27 @@ namespace StoreApi.Apps.AdminApp.Controllers
     public class CategoriesController : ControllerBase
     {
         private readonly StoreDbContext _context;
+        private readonly IMapper _mapper;
 
-        public CategoriesController(StoreDbContext context)
+        public CategoriesController(StoreDbContext context,IMapper mapper)
         {
             this._context = context;
+            this._mapper = mapper;
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> Get(int Id)
         {
-            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == Id);
+            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
             if (category == null) return NotFound();
 
-            CategoryGetDto categoryDto = new CategoryGetDto
-            {
-                Id = category.Id,
-                Name = category.Name,
-                CreatedAt = category.CreatedAt,
-                ModifiedAt = category.ModifiedAt,
-
-            };
+            CategoryGetDto categoryDto = _mapper.Map<CategoryGetDto>(category);
             return Ok(categoryDto);
         }
         [HttpGet("")]
+        [Authorize(Roles ="Admin")]
+
         public async Task<IActionResult> GetAll(int page = 1)
         {
             var query = _context.Categories.Where(x => !x.IsDeleted);
@@ -55,7 +55,7 @@ namespace StoreApi.Apps.AdminApp.Controllers
         public async Task<IActionResult> Create(CategoryPostDto categoryDto)
         {
             if(categoryDto == null) return BadRequest();
-            if (await _context.Categories.AnyAsync(x => x.Name.ToUpper() == categoryDto.Name.Trim().ToUpper()))
+            if (await _context.Categories.AnyAsync(x => x.Name.ToUpper() == categoryDto.Name.Trim().ToUpper() && !x.IsDeleted))
                 return StatusCode(409);
             Category category = new Category
             {
@@ -68,11 +68,20 @@ namespace StoreApi.Apps.AdminApp.Controllers
         [HttpPut("")]
         public async Task<IActionResult>Update(int Id, CategoryPostDto categoryDto)
         {
-            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == Id);
+            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
             if (category == null) return NotFound();
 
             category.Name = categoryDto.Name;
             category.ModifiedAt = DateTime.UtcNow;
+            return NoContent();
+        }
+        [HttpDelete("")]
+        public async Task<IActionResult> Delete(int Id)
+        {
+            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
+            if (category == null) return NotFound();
+            category.IsDeleted = true;
+            _context.SaveChanges();
             return NoContent();
         }
 
