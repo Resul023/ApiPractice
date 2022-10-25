@@ -14,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using StoreApi.Apps.AdminApp.DTOs.ProductDtos;
 using StoreApi.Apps.AdminApp.Profiles;
 using StoreApi.DATA.Entities;
+using StoreApi.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,6 +65,9 @@ namespace StoreApi
                 options.Password.RequireNonAlphanumeric = false;
             }).AddDefaultTokenProviders().AddEntityFrameworkStores<StoreDbContext>();
 
+            //Jwtservices custom services
+            services.AddScoped<IJwtService, JwtServices>();
+
             //Jwt 
             services.AddAuthentication(options =>
             {
@@ -74,9 +78,9 @@ namespace StoreApi
             {
                 configuration.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                 {
-                    ValidIssuer = "https://localhost:44327/",
-                    ValidAudience = "https://localhost:44327/",
-                    IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes("a2b5851a-af6f-47ea-94d3-a7465fa9401b"))
+                    ValidIssuer = Configuration.GetSection("JWT:issuer").Value,
+                    ValidAudience = Configuration.GetSection("JWT:audience").Value,
+                    IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(Configuration.GetSection("JWT:secret").Value))
                 };
             });
 

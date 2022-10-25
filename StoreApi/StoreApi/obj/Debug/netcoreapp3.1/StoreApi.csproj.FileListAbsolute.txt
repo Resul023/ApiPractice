@@ -71,3 +71,5 @@ C:\Users\User\Desktop\NewApiTask@\StoreApi\StoreApi\obj\Debug\netcoreapp3.1\Stor
 C:\Users\User\Desktop\NewApiTask@\StoreApi\StoreApi\obj\Debug\netcoreapp3.1\StoreApi.pdb
 C:\Users\User\Desktop\NewApiTask@\StoreApi\StoreApi\obj\Debug\netcoreapp3.1\StoreApi.genruntimeconfig.cache
 C:\Users\User\Desktop\NewApiTask@\StoreApi\StoreApi\bin\Debug\netcoreapp3.1\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\User\Desktop\NewApiTask@\StoreApi\StoreApi\obj\Debug\netcoreapp3.1\staticwebassets\StoreApi.StaticWebAssets.xml
+C:\Users\User\Desktop\NewApiTask@\StoreApi\StoreApi\obj\Debug\netcoreapp3.1\scopedcss\bundle\StoreApi.styles.css

@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using StoreApi.Apps.AdminApp.DTOs.AccountDtos;
 using StoreApi.DATA.Entities;
+using StoreApi.Services;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -20,11 +22,15 @@ namespace StoreApi.Apps.AdminApp.Controllers
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IConfiguration _configuration;
+        private readonly IJwtService _jwtService;
 
-        public AccountsController(UserManager<AppUser> userManager,RoleManager<IdentityRole> roleManager)
+        public AccountsController(UserManager<AppUser> userManager,RoleManager<IdentityRole> roleManager,IConfiguration configuration,IJwtService jwtService)
         {
             this._userManager = userManager;
             this._roleManager = roleManager;
+            this._configuration = configuration;
+            this._jwtService = jwtService;
         }
         //public IActionResult Create()
         //{
@@ -50,28 +56,8 @@ namespace StoreApi.Apps.AdminApp.Controllers
             if (!await _userManager.CheckPasswordAsync(user, loginDto.Password)) 
                 return NotFound();
 
-            List<Claim> claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name,user.UserName),
-                new Claim(ClaimTypes.NameIdentifier,user.Id),
-                new Claim("FullName",user.FullName),
-            };
-
             var roles = await _userManager.GetRolesAsync(user);
-            claims.AddRange(roles.Select(x => new Claim(ClaimTypes.Role, x)).ToList());
-
-            string keyStr = "a2b5851a-af6f-47ea-94d3-a7465fa9401b";
-            SymmetricSecurityKey key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(keyStr));
-            SigningCredentials creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            JwtSecurityToken token = new JwtSecurityToken(
-                claims: claims,
-                signingCredentials: creds,
-                expires:DateTime.Now.AddDays(2),
-                issuer: "https://localhost:44327/",
-                audience: "https://localhost:44327/"
-                );
-            string tokenStr = new JwtSecurityTokenHandler().WriteToken(token);
+            string tokenStr = _jwtService.Generate(user, roles,_configuration);
             return Ok(new {token = tokenStr});
         }
     }
