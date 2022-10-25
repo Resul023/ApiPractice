@@ -11,13 +11,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using StoreApi.Apps.AdminApp.DTOs.ProductDtos;
 using StoreApi.Apps.AdminApp.Profiles;
 using StoreApi.DATA.Entities;
 using StoreApi.Services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using WebApplication1.DAL;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -45,7 +48,7 @@ namespace StoreApi
                 options.UseSqlServer(Configuration.GetConnectionString("Default"));
             });
             //FluentValidation
-            services.AddControllers().AddFluentValidation(x=>x.RegisterValidatorsFromAssemblyContaining<ProductPostDtoValidator>());
+            services.AddControllers().AddFluentValidation(x => x.RegisterValidatorsFromAssemblyContaining<ProductPostDtoValidator>());
 
             /*services.AddControllersWithViews()
                     .AddNewtonsoftJson(options =>
@@ -84,6 +87,52 @@ namespace StoreApi
                 };
             });
 
+            //Swager configuration
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Store API",
+                    Version = "v1",
+                    Description = "An API to perform Store operations",
+                    TermsOfService = new Uri("https://example.com/terms"),
+                    Contact = new OpenApiContact
+                    {
+                        Name = "John Walkner",
+                        Email = "John.Walkner@gmail.com",
+                        Url = new Uri("https://twitter.com/jwalkner"),
+                    },
+                    License = new OpenApiLicense
+                    {
+                        Name = "Employee API LICX",
+                        Url = new Uri("https://example.com/license"),
+                    }
+                });
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Please insert JWT with Bearer into field",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] { }
+                    }
+                });
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+            });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -98,12 +147,19 @@ namespace StoreApi
 
             app.UseRouting();
 
+            app.UseSwagger();
+
             app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+
+            app.UseSwaggerUI(x =>
+            {
+                x.SwaggerEndpoint("/swagger/v1/swagger.json", "Store API V1");
             });
         }
     }

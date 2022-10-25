@@ -47,7 +47,22 @@ namespace StoreApi.Apps.AdminApp.Controllers
         //    var addRoleToMember = _userManager.AddToRoleAsync(userMember, "Member").Result;
         //    return Ok();
         //}
+        /// <summary>
+        /// This end point returns token 
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST api/admin/accounts/login
+        ///     {
+        ///         "userName":"Admin",
+        ///         "password":"Admin123"
+        ///     }
+        /// </remarks>
+        /// <param name="loginDto"></param>
+        /// <returns></returns>
         [HttpPost("login")]
+        
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
             AppUser user = await _userManager.FindByNameAsync(loginDto.UserName);

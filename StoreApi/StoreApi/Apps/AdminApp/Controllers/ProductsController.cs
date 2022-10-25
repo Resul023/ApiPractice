@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StoreApi.Apps.AdminApp.DTOs.CategoryDtos;
 using StoreApi.Apps.AdminApp.DTOs.ProductDtos;
 using StoreApi.DATA.Entities;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using WebApplication1.DAL;
@@ -14,6 +16,7 @@ namespace StoreApi.Apps.AdminApp.Controllers
 {
     [Route("admin/api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class ProductsController : ControllerBase
     {
         private readonly StoreDbContext _context;

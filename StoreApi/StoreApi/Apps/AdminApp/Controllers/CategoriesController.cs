@@ -16,6 +16,7 @@ namespace StoreApi.Apps.AdminApp.Controllers
 {
     [Route("admin/api/[controller]")]
     [ApiController]
+    [Authorize(Roles ="Admin")]
     public class CategoriesController : ControllerBase
     {
         private readonly StoreDbContext _context;
@@ -28,7 +29,7 @@ namespace StoreApi.Apps.AdminApp.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize]
+        
         public async Task<IActionResult> Get(int Id)
         {
             Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
@@ -38,7 +39,6 @@ namespace StoreApi.Apps.AdminApp.Controllers
             return Ok(categoryDto);
         }
         [HttpGet("")]
-        [Authorize(Roles ="Admin")]
 
         public async Task<IActionResult> GetAll(int page = 1)
         {
