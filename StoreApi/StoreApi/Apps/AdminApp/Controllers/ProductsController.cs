@@ -16,7 +16,7 @@ namespace StoreApi.Apps.AdminApp.Controllers
 {
     [Route("admin/api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class ProductsController : ControllerBase
     {
         private readonly StoreDbContext _context;
@@ -29,6 +29,7 @@ namespace StoreApi.Apps.AdminApp.Controllers
         }
         [HttpGet]
         [Route("{id}")]
+        [ProducesResponseType(typeof(ProductGetDto),200)]
         public async Task<IActionResult> Get(int id)
         {
             Product product = await _context.Products.Include(x=>x.Category).ThenInclude(x=>x.Products).FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
@@ -40,6 +41,7 @@ namespace StoreApi.Apps.AdminApp.Controllers
         }
         [HttpGet]
         [Route("")]
+        [ProducesResponseType(typeof(ProductListDto), 200)]
         public async Task<IActionResult> GetAll(int page =1)
         {
             var products = await _context.Products.Include(x=>x.Category).Where(x=>!x.IsDeleted).Skip((page-1)*8).Take(8).ToListAsync();
@@ -84,7 +86,20 @@ namespace StoreApi.Apps.AdminApp.Controllers
 
             return StatusCode(StatusCodes.Status201Created, product);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Id"></param>
+        /// <param name="categoryDto"></param>
+        /// <returns></returns>
+        /// <response code="204">Entity updated successfuly</response>
+        /// <response code="400">Model is not Valid</response>
+        /// <response code="404">Not found</response>
         [HttpPut("{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
         public async Task<IActionResult> Update(int id,ProductPostDto productDto)
         {
             Product isExists = await _context.Products.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);

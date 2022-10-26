@@ -62,7 +62,7 @@ namespace StoreApi.Apps.AdminApp.Controllers
         /// <param name="loginDto"></param>
         /// <returns></returns>
         [HttpPost("login")]
-        
+        [ProducesResponseType(typeof(LoginDto), 200)]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
             AppUser user = await _userManager.FindByNameAsync(loginDto.UserName);

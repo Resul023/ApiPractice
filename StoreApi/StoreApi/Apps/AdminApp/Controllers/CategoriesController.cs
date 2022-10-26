@@ -16,7 +16,7 @@ namespace StoreApi.Apps.AdminApp.Controllers
 {
     [Route("admin/api/[controller]")]
     [ApiController]
-    [Authorize(Roles ="Admin")]
+    [Authorize(Roles = "Admin")]
     public class CategoriesController : ControllerBase
     {
         private readonly StoreDbContext _context;
@@ -29,17 +29,17 @@ namespace StoreApi.Apps.AdminApp.Controllers
         }
 
         [HttpGet("{id}")]
-        
-        public async Task<IActionResult> Get(int Id)
+        [ProducesResponseType(typeof(CategoryGetDto),200)]
+        public async Task<IActionResult> Get(int id)
         {
-            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
+            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
             if (category == null) return NotFound();
 
             CategoryGetDto categoryDto = _mapper.Map<CategoryGetDto>(category);
             return Ok(categoryDto);
         }
         [HttpGet("")]
-
+        [ProducesResponseType(typeof(CategoryListDto), 200)]
         public async Task<IActionResult> GetAll(int page = 1)
         {
             var query = _context.Categories.Where(x => !x.IsDeleted);
@@ -60,19 +60,33 @@ namespace StoreApi.Apps.AdminApp.Controllers
             Category category = new Category
             {
                 Name = categoryDto.Name,
+                IsDeleted = false
             };
             await _context.Categories.AddAsync(category);
             await _context.SaveChangesAsync();
             return StatusCode(201, category);
         }
-        [HttpPut("")]
-        public async Task<IActionResult>Update(int Id, CategoryPostDto categoryDto)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Id"></param>
+        /// <param name="categoryDto"></param>
+        /// <returns></returns>
+        /// <response code="204">Entity updated successfuly</response>
+        /// <response code="400">Model is not Valid</response>
+        /// <response code="404">Not found</response>
+        [HttpPut("{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult>Update(int id, CategoryPostDto categoryDto)
         {
-            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
+            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
             if (category == null) return NotFound();
 
             category.Name = categoryDto.Name;
             category.ModifiedAt = DateTime.UtcNow;
+            _context.SaveChanges();
             return NoContent();
         }
         [HttpDelete("")]

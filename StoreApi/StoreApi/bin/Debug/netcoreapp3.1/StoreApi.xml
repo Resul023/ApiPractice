@@ -20,5 +20,27 @@
              <param name="loginDto"></param>
              <returns></returns>
         </member>
+        <member name="M:StoreApi.Apps.AdminApp.Controllers.CategoriesController.Update(System.Int32,StoreApi.Apps.AdminApp.DTOs.CategoryDtos.CategoryPostDto)">
+            <summary>
+            
+            </summary>
+            <param name="Id"></param>
+            <param name="categoryDto"></param>
+            <returns></returns>
+            <response code="204">Entity updated successfuly</response>
+            <response code="400">Model is not Valid</response>
+            <response code="404">Not found</response>
+        </member>
+        <member name="M:StoreApi.Apps.AdminApp.Controllers.ProductsController.Update(System.Int32,StoreApi.Apps.AdminApp.DTOs.ProductDtos.ProductPostDto)">
+            <summary>
+            
+            </summary>
+            <param name="Id"></param>
+            <param name="categoryDto"></param>
+            <returns></returns>
+            <response code="204">Entity updated successfuly</response>
+            <response code="400">Model is not Valid</response>
+            <response code="404">Not found</response>
+        </member>
     </members>
 </doc>

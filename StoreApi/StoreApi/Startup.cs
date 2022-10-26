@@ -16,6 +16,7 @@ using StoreApi.Apps.AdminApp.DTOs.ProductDtos;
 using StoreApi.Apps.AdminApp.Profiles;
 using StoreApi.DATA.Entities;
 using StoreApi.Services;
+using Swashbuckle.AspNetCore.Swagger;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -131,6 +132,7 @@ namespace StoreApi
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
+                c.AddFluentValidationRulesScoped();
             });
 
         }
