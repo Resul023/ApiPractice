@@ -15,6 +15,7 @@ using Microsoft.OpenApi.Models;
 using StoreApi.Apps.AdminApp.DTOs.ProductDtos;
 using StoreApi.Apps.AdminApp.Profiles;
 using StoreApi.DATA.Entities;
+using StoreApi.DATA.Repositories;
 using StoreApi.Services;
 using Swashbuckle.AspNetCore.Swagger;
 using System;
@@ -71,7 +72,9 @@ namespace StoreApi
 
             //Jwtservices custom services
             services.AddScoped<IJwtService, JwtServices>();
-
+            //CategoryRepository
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
             //Jwt 
             services.AddAuthentication(options =>
             {
@@ -109,26 +112,26 @@ namespace StoreApi
                         Url = new Uri("https://example.com/license"),
                     }
                 });
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    In = ParameterLocation.Header,
-                    Description = "Please insert JWT with Bearer into field",
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey
-                });
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        new string[] { }
-                    }
-                });
+                //c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                //{
+                //    In = ParameterLocation.Header,
+                //    Description = "Please insert JWT with Bearer into field",
+                //    Name = "Authorization",
+                //    Type = SecuritySchemeType.ApiKey
+                //});
+                //c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+                //    {
+                //        new OpenApiSecurityScheme
+                //        {
+                //            Reference = new OpenApiReference
+                //            {
+                //                Type = ReferenceType.SecurityScheme,
+                //                Id = "Bearer"
+                //            }
+                //        },
+                //        new string[] { }
+                //    }
+                //});
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
@@ -143,13 +146,18 @@ namespace StoreApi
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+                app.UseSwaggerUI(x =>
+                {
+                    x.SwaggerEndpoint("/swagger/v1/swagger.json", "Store API V1");
+                });
             }
 
             app.UseHttpsRedirection();
 
             app.UseRouting();
 
-            app.UseSwagger();
+            
 
             app.UseAuthentication();
             app.UseAuthorization();
@@ -159,10 +167,7 @@ namespace StoreApi
                 endpoints.MapControllers();
             });
 
-            app.UseSwaggerUI(x =>
-            {
-                x.SwaggerEndpoint("/swagger/v1/swagger.json", "Store API V1");
-            });
+            
         }
     }
 }

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using StoreApi.Apps.AdminApp.DTOs.CategoryDtos;
 using StoreApi.DATA.Entities;
+using StoreApi.DATA.Repositories;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,23 +17,23 @@ namespace StoreApi.Apps.AdminApp.Controllers
 {
     [Route("admin/api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class CategoriesController : ControllerBase
     {
-        private readonly StoreDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public CategoriesController(StoreDbContext context,IMapper mapper)
+        public CategoriesController(IMapper mapper,ICategoryRepository categoryRepository)
         {
-            this._context = context;
             this._mapper = mapper;
+            this._categoryRepository = categoryRepository;
         }
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(CategoryGetDto),200)]
         public async Task<IActionResult> Get(int id)
         {
-            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+            Category category = await _categoryRepository.GetAsync(x=>!x.IsDeleted && x.Id == id);
             if (category == null) return NotFound();
 
             CategoryGetDto categoryDto = _mapper.Map<CategoryGetDto>(category);
@@ -42,7 +43,7 @@ namespace StoreApi.Apps.AdminApp.Controllers
         [ProducesResponseType(typeof(CategoryListDto), 200)]
         public async Task<IActionResult> GetAll(int page = 1)
         {
-            var query = _context.Categories.Where(x => !x.IsDeleted);
+            var query = _categoryRepository.GetAll(x => !x.IsDeleted);
             CategoryListDto categoryListDto = new CategoryListDto
             {
                 TotalCount = query.Count(),
@@ -55,15 +56,15 @@ namespace StoreApi.Apps.AdminApp.Controllers
         public async Task<IActionResult> Create(CategoryPostDto categoryDto)
         {
             if(categoryDto == null) return BadRequest();
-            if (await _context.Categories.AnyAsync(x => x.Name.ToUpper() == categoryDto.Name.Trim().ToUpper() && !x.IsDeleted))
+            if (await _categoryRepository.IsExistAsync(x => x.Name.ToUpper() == categoryDto.Name.Trim().ToUpper() && !x.IsDeleted))
                 return StatusCode(409);
             Category category = new Category
             {
                 Name = categoryDto.Name,
                 IsDeleted = false
             };
-            await _context.Categories.AddAsync(category);
-            await _context.SaveChangesAsync();
+            await _categoryRepository.AddAsync(category);
+            await _categoryRepository.CommitAsync();
             return StatusCode(201, category);
         }
         /// <summary>
@@ -81,21 +82,21 @@ namespace StoreApi.Apps.AdminApp.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult>Update(int id, CategoryPostDto categoryDto)
         {
-            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+            Category category = await _categoryRepository.GetAsync(x=>!x.IsDeleted && x.Id == id);
             if (category == null) return NotFound();
 
             category.Name = categoryDto.Name;
             category.ModifiedAt = DateTime.UtcNow;
-            _context.SaveChanges();
+            await _categoryRepository.CommitAsync();
             return NoContent();
         }
-        [HttpDelete("")]
-        public async Task<IActionResult> Delete(int Id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
-            Category category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == Id && !x.IsDeleted);
+            Category category = await _categoryRepository.GetAsync(x =>!x.IsDeleted && x.Id == id);
             if (category == null) return NotFound();
             category.IsDeleted = true;
-            _context.SaveChanges();
+            await _categoryRepository.CommitAsync();
             return NoContent();
         }
 
